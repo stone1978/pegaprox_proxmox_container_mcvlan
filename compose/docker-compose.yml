@@ -1,0 +1,55 @@
+services:
+  pegaprox:
+    image: ghcr.io/pegaprox/pegaprox:latest
+    container_name: pegaprox
+    restart: unless-stopped
+
+    # ─── Pflichtfelder: vom User anpassen ────────────────────────────────────
+    # 1) TRUSTED_PROXIES: dein LAN-Subnetz (z.B. 192.168.0.0/24)
+    # 2) ipv4_address:    freie LAN-IP für den Container
+    # 3) networks.name:   Name deines macvlan-Netzwerks
+    # ─────────────────────────────────────────────────────────────────────────
+
+    environment:
+      - PEGAPROX_HOST=0.0.0.0
+      - PEGAPROX_PORT=5000
+      - TRUSTED_PROXIES=<dein 24er SUBNETZ z.B. 192.168.0.0/24>
+      - DEBUG=false
+
+    # macvlan: Container hat eigene LAN-IP – kein ports-Mapping nötig
+    expose:
+      - "5000"   # Web UI / API (HTTPS)
+      - "5001"   # VNC WebSocket
+      - "5002"   # SSH WebSocket
+
+    volumes:
+      - pegaprox-config:/app/config
+      - pegaprox-logs:/app/logs
+
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request,ssl; ctx=ssl._create_unverified_context(); urllib.request.urlopen('https://127.0.0.1:5000/api/health', context=ctx)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+    networks:
+      pegaprox_macvlan:
+        ipv4_address: <deine Container-IP z.B. 192.168.0.111>
+
+networks:
+  pegaprox_macvlan:
+    external: true
+    name: <DEIN MACVLAN NETZWERK NAME>
+
+volumes:
+  pegaprox-config:
+    external: true   # Volume muss bereits existieren
+  pegaprox-logs:
+    external: true   # Volume muss bereits existieren
