@@ -2,7 +2,7 @@ services:
   pegaprox:
     image: ghcr.io/pegaprox/pegaprox:latest
     container_name: pegaprox
-    restart: unless-stopped
+    restart: allways
 
     # ─── Pflichtfelder: vom User anpassen ────────────────────────────────────
     # 1) TRUSTED_PROXIES: dein LAN-Subnetz (z.B. 192.168.0.0/24)
